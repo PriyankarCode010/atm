@@ -61,10 +61,10 @@ export default function Withdraw() {
         router.back();
       }, 2000);
       
-    } catch (error) {
+    } catch {
       setLoading(false);
       setMessage("⚠️ Network error, please try again.");
-    }
+    }    
   };
 
   return (

@@ -13,13 +13,13 @@ export default function Deposit() {
   useEffect(() => {
     const storedAccountNumber = localStorage.getItem("accountNumber");
     console.log("Stored Account Number:", storedAccountNumber);
-
+  
     if (!storedAccountNumber) {
       router.replace("/");
     } else {
       setAccountNumber(storedAccountNumber);
     }
-  }, []);
+  }, [router]); // ✅ Add 'router' here  
 
   const handleDeposit = async () => {
     setMessage("");

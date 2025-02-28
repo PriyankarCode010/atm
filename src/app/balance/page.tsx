@@ -1,11 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Balance() {
   const [balance, setBalance] = useState("");
-  const router = useRouter();
 
   useEffect(() => {
     const fetchBalance = async () => {
