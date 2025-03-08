@@ -1,41 +1,52 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { verifyUser } from "@/lib/firebaseActions";
 
 export default function Home() {
   const router = useRouter();
   const [accountNumber, setAccountNumber] = useState("");
+  const [pin, setPin] = useState("");
 
-  const handleOnClick = () => {
-    if (!accountNumber) return alert("Please enter your account number!");
+  const handleLogin = async () => {
+    if (!accountNumber || !pin) return alert("Enter account number and PIN!");
 
-    // Store account number in localStorage (temporary)
+    const response = await verifyUser(accountNumber, pin);
+    if (!response.success) return alert("Invalid credentials!");
+
+    // Store account number in local storage
     localStorage.setItem("accountNumber", accountNumber);
 
-    // Redirect to PIN entry page
-    router.push("/pin-entry");
+    // Redirect based on PIN change requirement
+    if (response.needsPinChange) {
+      router.push("/change-pin");
+    } else {
+      router.push("/menu");
+    }
   };
 
   return (
     <div className="h-screen bg-gray-200 flex flex-col justify-center items-center">
-      <div className="flex flex-col items-center bg-white p-10 rounded-lg shadow-lg">
-        <h1 className="text-black font-bold text-4xl py-5">Enter Account Number</h1>
+      <div className="bg-white p-10 rounded-lg shadow-lg">
+        <h1 className="text-black font-bold text-3xl py-4">Login</h1>
         <Input
           type="number"
           placeholder="Account Number"
-          className="w-full p-3 border border-gray-300 rounded-lg"
+          className="w-full p-3 border"
           value={accountNumber}
           onChange={(e) => setAccountNumber(e.target.value)}
         />
-        <Button
-          variant="default"
-          size="lg"
-          className="text-white bg-black my-5 hover:bg-gray-800"
-          onClick={handleOnClick}
-        >
-          Submit
+        <Input
+          type="password"
+          placeholder="PIN"
+          className="w-full p-3 border mt-3"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+        />
+        <Button onClick={handleLogin} className="bg-black text-white mt-4 w-full">
+          Login
         </Button>
       </div>
     </div>

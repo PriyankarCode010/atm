@@ -9,17 +9,13 @@ export default function Deposit() {
   const [accountNumber, setAccountNumber] = useState(""); 
   const router = useRouter();
 
-  // Remove token on component mount & fetch account number
+  // Fetch account number on mount
   useEffect(() => {
-    localStorage.removeItem("token"); // Release token on page load
     const storedAccountNumber = localStorage.getItem("accountNumber");
 
     if (!storedAccountNumber) {
       setMessage("⚠️ No account found. Redirecting...");
-      setTimeout(() => {
-        localStorage.removeItem("accountNumber");
-        router.replace("/");
-      }, 2000);
+      setTimeout(() => router.replace("/"), 2000);
     } else {
       setAccountNumber(storedAccountNumber);
     }
@@ -28,7 +24,6 @@ export default function Deposit() {
   // Handle deposit transaction
   const handleDeposit = async () => {
     setMessage("");
-    if (!accountNumber) return router.push("/");
 
     const depositAmount = Number(amount);
     if (depositAmount <= 0 || isNaN(depositAmount)) {
@@ -44,57 +39,60 @@ export default function Deposit() {
 
       const data = await res.json();
       if (!res.ok) {
-        return setMessage(data.error || "⚠️ Deposit failed! Check console.");
+        return setMessage(data.error || "⚠️ Deposit failed! Try again.");
       }
 
-      setMessage(`✅ Amount deposited: ₹${depositAmount}`);
+      setMessage(`✅ ₹${depositAmount} deposited successfully!`);
       setAmount("");
 
-      setTimeout(() => {
-        router.push("/menu");
-      }, 2000);
+      setTimeout(() => router.push("/"), 2000);
     } catch (error) {
       console.error("Deposit Error:", error);
       setMessage("⚠️ Network error, please try again.");
     }
   };
 
-  // Logout function
+  // Logout function with 2-second delay
   const handleLogout = () => {
-    localStorage.removeItem("accountNumber");
-    router.push("/");
+    setMessage("⚠️ Logging out...");
+    setTimeout(() => {
+      localStorage.clear();
+      sessionStorage.clear(); // Clear any session storage if used
+      router.replace("/"); // Ensure complete logout by redirecting to the login page
+    }, 2000);
   };
+  
 
   return (
     <div className="h-screen flex flex-col justify-center items-center bg-gray-200 px-6">
       <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h2 className="text-3xl font-bold mb-6 text-black">Deposit Money</h2>
+        <h2 className="text-3xl font-bold mb-6 text-black text-center">Deposit Money</h2>
 
         {/* Amount Input */}
         <input
           type="number"
           placeholder="Enter Amount"
-          className="p-3 border rounded mb-3 w-full max-w-md"
+          className="p-3 border rounded w-full"
           value={amount}
           onChange={(e) => {
             setAmount(e.target.value);
-            setMessage(""); // Clear message on input change
+            if (Number(e.target.value) > 0) setMessage(""); // Clear error if input is valid
           }}
         />
 
         {/* Error/Success Message */}
         {message && (
-          <p className={`text-lg ${message.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
+          <p className={`text-lg mt-2 ${message.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>
             {message}
           </p>
         )}
 
-        {/* Deposit & Logout Buttons */}
-        <div className="flex justify-between mt-5">
+        {/* Buttons */}
+        <div className="flex flex-col gap-3 mt-5">
           <Button
             variant="default"
             size="lg"
-            className="text-white bg-black hover:bg-gray-800"
+            className="text-white bg-black hover:bg-gray-800 w-full"
             onClick={handleDeposit}
             disabled={!amount || Number(amount) <= 0 || isNaN(Number(amount))}
           >
@@ -103,7 +101,7 @@ export default function Deposit() {
           <Button
             variant="destructive"
             size="lg"
-            className="text-white bg-red-600 hover:bg-red-800"
+            className="text-white bg-red-600 hover:bg-red-800 w-full"
             onClick={handleLogout}
           >
             Logout
