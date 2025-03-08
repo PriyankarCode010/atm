@@ -2,6 +2,13 @@ import { db } from "@/lib/firebase";
 import { collection, doc, getDoc, query, where, getDocs } from "firebase/firestore";
 import { NextResponse } from "next/server";
 
+// Define Transaction type
+interface Transaction {
+  type: "deposit" | "withdrawal";
+  amount: number;
+  timestamp: string;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -35,11 +42,11 @@ export async function GET(req: Request) {
     }
 
     // 🔹 Get transactions array from user document
-    const transactions = userData?.transactions ?? [];
+    const transactions: Transaction[] = userData?.transactions ?? [];
 
     // 🔹 Sort transactions by timestamp (newest first) and return latest 5
     const latestTransactions = transactions
-      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 5);
 
     return NextResponse.json({ transactions: latestTransactions });

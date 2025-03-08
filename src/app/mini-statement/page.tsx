@@ -3,10 +3,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
+// Define the transaction type
+interface Transaction {
+  type: "deposit" | "withdrawal";
+  amount: number;
+  timestamp: string;
+}
+
 export default function Transactions() {
   const router = useRouter();
-  const [accountNumber, setAccountNumber] = useState("");
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]); // Explicit type
   const [message, setMessage] = useState("");
 
   // Retrieve stored account number & fetch transactions
@@ -16,7 +22,6 @@ export default function Transactions() {
       router.push("/");
       return;
     }
-    setAccountNumber(storedAccount);
     fetchTransactions(storedAccount);
   }, [router]);
 
@@ -31,7 +36,7 @@ export default function Transactions() {
         return;
       }
 
-      setTransactions(data.transactions);
+      setTransactions(data.transactions as Transaction[]);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       setMessage("Something went wrong.");
