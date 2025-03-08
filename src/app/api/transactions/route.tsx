@@ -1,25 +1,50 @@
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, query, where, getDocs } from "firebase/firestore";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
+  try {
     const { searchParams } = new URL(req.url);
-    const uid = searchParams.get("uid");
-  
-    if (!uid) return NextResponse.json({ error: "Missing UID" }, { status: 400 });
-  
-    try {
-      const transactionsRef = collection(db, "transactions");
-      const transactionsQuery = query(transactionsRef, where("uid", "==", uid), orderBy("timestamp", "desc"), limit(5));
-      const transactionsSnapshot = await getDocs(transactionsQuery);
-      
-      const transactions = transactionsSnapshot.docs.map(doc => doc.data());
-  
-      return NextResponse.json({ transactions });
-    } catch (error:unknown) {
-      if (error instanceof Error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    const accountNumber = searchParams.get("accountNumber");
+
+    if (!accountNumber) {
+      return NextResponse.json({ error: "Missing accountNumber" }, { status: 400 });
+    }
+
+    let userRef;
+    let userData;
+
+    // 🔹 Check if accountNumber is the document ID
+    userRef = doc(db, "users", String(accountNumber));
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      // 🔹 If not found, try searching by accountNumber field
+      const userQuery = query(collection(db, "users"), where("accountNumber", "==", accountNumber));
+      const userSnapshot = await getDocs(userQuery);
+
+      if (userSnapshot.empty) {
+        return NextResponse.json({ error: "User not found in Firestore" }, { status: 404 });
+      }
+
+      const firstDoc = userSnapshot.docs[0];
+      userRef = firstDoc.ref;
+      userData = firstDoc.data();
     } else {
-        return NextResponse.json({ error: "An unknown error occurred" }, { status: 500 });
-    }    }
+      userData = userDoc.data();
+    }
+
+    // 🔹 Get transactions array from user document
+    const transactions = userData?.transactions ?? [];
+
+    // 🔹 Sort transactions by timestamp (newest first) and return latest 5
+    const latestTransactions = transactions
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 5);
+
+    return NextResponse.json({ transactions: latestTransactions });
+  } catch (error) {
+    console.error("Fetch Transactions Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}

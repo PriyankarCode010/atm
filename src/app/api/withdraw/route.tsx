@@ -1,6 +1,6 @@
 import { db } from "@/lib/firebase";
 import { NextResponse } from "next/server";
-import { collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc, addDoc } from "firebase/firestore";
 
 export async function POST(req: Request) {
   try {
@@ -32,9 +32,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Insufficient funds! Minimum balance of ₹500 must be maintained." }, { status: 400 });
     }
 
-    // 🔹 Update balance
+    // 🔹 Create withdrawal transaction
     const newBalance = currentBalance - amount;
-    await updateDoc(userRef, { balance: newBalance });
+    const newTransaction = { type: "withdrawal", amount, timestamp: new Date().toISOString() };
+
+    // 🔹 Update Firestore
+    await updateDoc(userRef, {
+      balance: newBalance,
+      transactions: [...(userData.transactions || []), newTransaction],
+    });
+
+    // 🔹 Store transaction separately
+    await addDoc(collection(db, "transactions"), {
+      accountNumber,
+      ...newTransaction,
+    });
 
     return NextResponse.json({ success: true, newBalance });
   } catch (error) {

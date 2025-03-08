@@ -1,37 +1,32 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 export default function Menu() {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/");
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [router]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen flex justify-center items-center bg-gray-200">
+        <p className="text-lg text-red-600">Redirecting to login...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col justify-center items-center bg-gray-200">
-      {/* Back Button */}
-      <div className="w-full flex justify-start px-6">
-        <Button
-          variant="ghost"
-          className="text-gray-800 hover:text-gray-500"
-          onClick={() => router.push("/login")}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </Button>
-      </div>
-
       {/* Heading */}
       <h2 className="text-3xl font-bold text-center mb-6">ATM Menu</h2>
 
@@ -62,6 +57,19 @@ export default function Menu() {
           Mini Statement
         </Button>
       </div>
+
+      {/* Logout Button */}
+      <Button
+        variant="destructive"
+        className="mt-6 bg-red-600 hover:bg-red-800 text-white px-6 py-2 text-lg font-bold rounded-lg"
+        onClick={() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("accountNumber");
+          router.push("/login");
+        }}
+      >
+        Logout
+      </Button>
     </div>
   );
 }
